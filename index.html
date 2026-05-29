@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>English with AI</title>
+<title>Shaberi with AI</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{--bg:#F2F2F7;--surface:#fff;--border:#E5E5EA;--text:#1C1C1E;--muted:#8E8E93;--blue:#007AFF;--green:#34C759;--orange:#FF9500;--purple:#AF52DE;--red:#FF3B30;--teal:#32ADE6;}
 body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
 header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-bottom:0.5px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;}
-.app-title{font-size:17px;font-weight:700;}
-.api-status{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;border:none;font-family:inherit;}
+.app-title{font-size:19px;font-weight:700;}
+.api-status{font-size:13px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;border:none;font-family:inherit;}
 .api-status.ok{background:rgba(52,199,89,0.12);color:var(--green);}
 .api-status.ng{background:rgba(255,59,48,0.1);color:var(--red);}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:flex-end;justify-content:center;}
@@ -25,7 +25,7 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 .bottom-nav{position:sticky;bottom:0;background:rgba(242,242,247,0.96);backdrop-filter:blur(20px);border-top:0.5px solid var(--border);display:flex;padding:8px 0 20px;z-index:100;flex-shrink:0;}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;cursor:pointer;padding:4px 0;font-family:inherit;}
 .nav-icon{font-size:22px;line-height:1;}
-.nav-label{font-size:10px;font-weight:600;color:var(--muted);}
+.nav-label{font-size:12px;font-weight:600;color:var(--muted);}
 .nav-btn.active .nav-label{color:var(--blue);}
 .nav-btn.active .nav-icon{transform:scale(1.1);}
 .view{display:none;flex:1;flex-direction:column;overflow:hidden;}
@@ -34,9 +34,9 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 .scroll-area::-webkit-scrollbar{display:none;}
 .card{background:white;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
 .card-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:0.04em;}
-.btn-primary{width:100%;padding:14px;background:var(--blue);border:none;border-radius:14px;color:white;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;}
+.btn-primary{width:100%;padding:15px;background:var(--blue);border:none;border-radius:14px;color:white;font-size:18px;font-weight:700;font-family:inherit;cursor:pointer;}
 .btn-primary:disabled{opacity:0.4;cursor:default;}
-.btn-next{width:100%;padding:13px;background:var(--blue);border:none;border-radius:14px;color:white;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px;display:none;}
+.btn-next{width:100%;padding:14px;background:var(--blue);border:none;border-radius:14px;color:white;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px;display:none;}
 .empty-state{text-align:center;padding:60px 20px;color:var(--muted);line-height:2;}
 .empty-state .icon{font-size:48px;margin-bottom:12px;}
 .loading{text-align:center;padding:48px 20px;color:var(--muted);}
@@ -56,33 +56,33 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 @keyframes wobble{from{transform:rotate(-2deg) scale(1);}to{transform:rotate(2deg) scale(1.03);}}
 @keyframes bob{from{transform:translateY(0);}to{transform:translateY(-6px);}}
 .avatar-badges{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center;}
-.badge{padding:5px 14px;background:white;border-radius:20px;font-size:12px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.badge{padding:6px 16px;background:white;border-radius:20px;font-size:14px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
 .badge.level{color:var(--purple);}
 .badge.streak{color:var(--orange);}
-.avatar-bubble{margin-top:8px;background:white;border-radius:20px;padding:9px 18px;font-size:14px;font-weight:500;color:var(--muted);box-shadow:0 2px 8px rgba(0,0,0,0.08);text-align:center;}
+.avatar-bubble{margin-top:8px;background:white;border-radius:20px;padding:10px 20px;font-size:16px;font-weight:500;color:var(--muted);box-shadow:0 2px 8px rgba(0,0,0,0.08);text-align:center;}
 .prompts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:0 16px 10px;flex-shrink:0;}
-.prompt-chip{padding:7px 14px;background:white;border-radius:20px;font-size:13px;font-weight:500;color:var(--blue);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.08);border:none;font-family:inherit;}
+.prompt-chip{padding:9px 16px;background:white;border-radius:20px;font-size:15px;font-weight:500;color:var(--blue);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.08);border:none;font-family:inherit;}
 .messages{flex:1;overflow-y:auto;padding:0 16px 8px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;}
 .messages::-webkit-scrollbar{display:none;}
 .turn{display:flex;flex-direction:column;gap:10px;}
 .user-bubble{align-self:flex-end;max-width:78%;background:var(--blue);border-radius:20px 20px 4px 20px;padding:11px 15px;}
-.user-bubble .label{font-size:11px;color:rgba(255,255,255,0.65);font-weight:700;margin-bottom:3px;}
-.user-bubble .text{font-size:16px;line-height:1.45;color:white;font-weight:500;}
+.user-bubble .label{font-size:13px;color:rgba(255,255,255,0.65);font-weight:700;margin-bottom:3px;}
+.user-bubble .text{font-size:18px;line-height:1.45;color:white;font-weight:500;}
 .ai-block{background:white;border-radius:4px 20px 20px 20px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
 .ai-section{padding:11px 15px;border-bottom:0.5px solid var(--border);}
 .ai-section:last-child{border-bottom:none;}
-.section-label{font-size:12px;font-weight:700;letter-spacing:0.04em;margin-bottom:5px;}
+.section-label{font-size:14px;font-weight:700;letter-spacing:0.04em;margin-bottom:5px;}
 .section-label.check{color:var(--green);}
 .section-label.natural{color:var(--blue);}
 .section-label.reply{color:var(--purple);}
 .section-label.jp{color:var(--muted);}
-.ai-section .content{font-size:15px;line-height:1.65;color:var(--text);}
-.ai-section .content.jp-text{color:var(--muted);font-size:14px;}
+.ai-section .content{font-size:17px;line-height:1.65;color:var(--text);}
+.ai-section .content.jp-text{color:var(--muted);font-size:16px;}
 .action-btns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
-.save-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:rgba(0,122,255,0.08);border:none;border-radius:12px;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.save-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:rgba(0,122,255,0.08);border:none;border-radius:12px;color:var(--blue);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
 .save-btn.saved{background:rgba(52,199,89,0.1);color:var(--green);}
-.speak-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:rgba(175,82,222,0.08);border:none;border-radius:12px;color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
-.thinking{display:flex;align-items:center;gap:10px;padding:12px 16px;background:white;border-radius:4px 20px 20px 20px;color:var(--muted);font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.speak-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:rgba(175,82,222,0.08);border:none;border-radius:12px;color:var(--purple);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.thinking{display:flex;align-items:center;gap:10px;padding:12px 16px;background:white;border-radius:4px 20px 20px 20px;color:var(--muted);font-size:16px;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
 .dots span{display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 2px;animation:dot-bounce 1.2s infinite;}
 .dots span:nth-child(1){background:var(--red);}
 .dots span:nth-child(2){background:var(--blue);animation-delay:0.2s;}
@@ -90,7 +90,7 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 @keyframes dot-bounce{0%,80%,100%{transform:translateY(0);opacity:0.4;}40%{transform:translateY(-6px);opacity:1;}}
 .input-area{background:rgba(242,242,247,0.96);backdrop-filter:blur(20px);border-top:0.5px solid var(--border);padding:10px 16px 6px;flex-shrink:0;}
 .input-row{display:flex;gap:8px;align-items:flex-end;}
-.text-input{flex:1;background:white;border:1px solid var(--border);border-radius:22px;padding:11px 16px;font-size:16px;font-family:inherit;color:var(--text);resize:none;outline:none;line-height:1.4;min-height:44px;max-height:120px;}
+.text-input{flex:1;background:white;border:1px solid var(--border);border-radius:22px;padding:11px 16px;font-size:17px;font-family:inherit;color:var(--text);resize:none;outline:none;line-height:1.4;min-height:44px;max-height:120px;}
 .text-input:focus{border-color:var(--blue);}
 .text-input::placeholder{color:var(--muted);}
 .mic-btn{width:44px;height:44px;border-radius:50%;border:none;background:white;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.1);}
@@ -98,72 +98,72 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.4);}50%{box-shadow:0 0 0 10px rgba(255,59,48,0);}}
 .send-btn{width:44px;height:44px;border-radius:50%;border:none;background:var(--blue);color:white;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,122,255,0.35);}
 .send-btn:disabled{opacity:0.35;cursor:default;box-shadow:none;}
-.mic-status{text-align:center;font-size:12px;color:var(--red);height:16px;margin-top:6px;font-weight:500;}
+.mic-status{text-align:center;font-size:14px;color:var(--red);height:16px;margin-top:6px;font-weight:500;}
 /* READING */
 .reading-tabs{display:flex;background:#E5E5EA;border-radius:10px;padding:2px;margin:12px 16px;gap:2px;flex-shrink:0;overflow-x:auto;}
-.rtab{flex:1;min-width:44px;padding:6px 4px;border-radius:8px;border:none;background:transparent;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;white-space:nowrap;}
+.rtab{flex:1;min-width:44px;padding:7px 4px;border-radius:8px;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;white-space:nowrap;}
 .rtab.active{background:white;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.12);}
 .rtab:disabled{opacity:0.35;cursor:default;}
 .rscreen{display:none;}
 .rscreen.active{display:block;}
 .sample-btns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-.sample-btn{padding:7px 13px;background:white;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-weight:600;color:var(--blue);cursor:pointer;font-family:inherit;}
-.r-textarea{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--text);outline:none;background:var(--bg);resize:none;height:130px;line-height:1.7;}
+.sample-btn{padding:9px 16px;background:white;border:1.5px solid var(--border);border-radius:20px;font-size:14px;font-weight:600;color:var(--blue);cursor:pointer;font-family:inherit;}
+.r-textarea{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font-size:16px;font-family:inherit;color:var(--text);outline:none;background:var(--bg);resize:none;height:130px;line-height:1.7;}
 .r-textarea:focus{border-color:var(--blue);}
 .summary-badge{display:inline-block;background:rgba(50,173,230,0.12);color:var(--teal);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
 .summary-points{margin-top:10px;display:flex;flex-direction:column;gap:8px;}
-.summary-point{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.6;}
+.summary-point{display:flex;gap:10px;align-items:flex-start;font-size:16px;line-height:1.6;}
 .summary-point .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:7px;}
 .structure-badge{display:inline-block;background:rgba(175,82,222,0.1);color:var(--purple);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
 .sentence-block{background:white;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
-.sentence-en{font-size:14px;line-height:1.8;margin-bottom:8px;border-left:3px solid var(--purple);padding-left:10px;}
-.structure-note{font-size:13px;line-height:1.7;}
-.structure-jp{font-size:13px;color:var(--muted);margin-top:6px;font-style:italic;}
+.sentence-en{font-size:16px;line-height:1.8;margin-bottom:8px;border-left:3px solid var(--purple);padding-left:10px;}
+.structure-note{font-size:15px;line-height:1.7;}
+.structure-jp{font-size:15px;color:var(--muted);margin-top:6px;font-style:italic;}
 .passage-box{background:white;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
 .passage-label{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:0.06em;margin-bottom:10px;}
-.passage-text{font-size:15px;line-height:1.85;}
+.passage-text{font-size:17px;line-height:1.85;}
 .question-card{background:white;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
-.q-badge{background:rgba(255,149,0,0.12);color:var(--orange);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;}
-.q-text{font-size:15px;font-weight:600;margin-bottom:14px;line-height:1.5;}
+.q-badge{background:rgba(255,149,0,0.12);color:var(--orange);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;}
+.q-text{font-size:17px;font-weight:600;margin-bottom:14px;line-height:1.5;}
 .choice{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;}
 .choice.correct{border-color:var(--green);background:rgba(52,199,89,0.08);}
 .choice.wrong{border-color:var(--red);background:rgba(255,59,48,0.06);}
 .choice-letter{width:26px;height:26px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0;margin-top:1px;}
 .choice.correct .choice-letter{background:var(--green);color:white;}
 .choice.wrong .choice-letter{background:var(--red);color:white;}
-.choice-text{font-size:14px;line-height:1.5;}
-.explanation{background:rgba(52,199,89,0.08);border-radius:10px;padding:10px 12px;font-size:13px;color:#1a7a35;line-height:1.6;margin-top:8px;display:none;}
+.choice-text{font-size:16px;line-height:1.5;}
+.explanation{background:rgba(52,199,89,0.08);border-radius:10px;padding:10px 12px;font-size:15px;color:#1a7a35;line-height:1.6;margin-top:8px;display:none;}
 .explanation.show{display:block;}
 .vocab-item{background:white;border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
-.vocab-word{font-size:20px;font-weight:800;color:var(--blue);}
-.vocab-pos{display:inline-block;background:rgba(0,122,255,0.1);color:var(--blue);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;}
-.vocab-meaning{font-size:15px;font-weight:700;margin:8px 0 6px;}
-.vocab-example{font-size:13px;color:var(--muted);line-height:1.7;border-left:3px solid var(--border);padding-left:10px;}
-.vocab-example-jp{font-size:12px;color:var(--muted);margin-top:3px;font-style:italic;}
+.vocab-word{font-size:22px;font-weight:800;color:var(--blue);}
+.vocab-pos{display:inline-block;background:rgba(0,122,255,0.1);color:var(--blue);font-size:13px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;}
+.vocab-meaning{font-size:17px;font-weight:700;margin:8px 0 6px;}
+.vocab-example{font-size:15px;color:var(--muted);line-height:1.7;border-left:3px solid var(--border);padding-left:10px;}
+.vocab-example-jp{font-size:14px;color:var(--muted);margin-top:3px;font-style:italic;}
 /* FLASHCARD */
 .fc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 16px;}
-.fc-counter{font-size:15px;font-weight:700;color:var(--muted);}
+.fc-counter{font-size:17px;font-weight:700;color:var(--muted);}
 .progress-bar{height:6px;background:var(--border);border-radius:3px;margin:0 16px 16px;overflow:hidden;}
 .progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.4s;}
-.fc-hint{text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px;}
+.fc-hint{text-align:center;font-size:14px;color:var(--muted);margin-bottom:14px;}
 .flashcard{height:210px;perspective:1000px;cursor:pointer;margin:0 16px 20px;}
 .flashcard-inner{position:relative;width:100%;height:100%;transition:transform 0.5s;transform-style:preserve-3d;}
 .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
 .fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-shadow:0 6px 24px rgba(0,0,0,0.1);}
 .fc-front{background:white;}
 .fc-back{background:linear-gradient(135deg,var(--blue),var(--purple));transform:rotateY(180deg);}
-.fc-word{font-size:30px;font-weight:800;color:var(--blue);}
-.fc-pos-hint{font-size:13px;color:var(--muted);margin-top:6px;}
-.fc-meaning{font-size:22px;font-weight:700;color:white;text-align:center;}
-.fc-example{font-size:12px;color:rgba(255,255,255,0.8);margin-top:10px;text-align:center;line-height:1.6;}
+.fc-word{font-size:36px;font-weight:800;color:var(--blue);}
+.fc-pos-hint{font-size:15px;color:var(--muted);margin-top:6px;}
+.fc-meaning{font-size:26px;font-weight:700;color:white;text-align:center;}
+.fc-example{font-size:14px;color:rgba(255,255,255,0.8);margin-top:10px;text-align:center;line-height:1.6;}
 .fc-btns{display:flex;gap:10px;padding:0 16px;}
-.fc-btn{flex:1;padding:14px;border-radius:14px;border:none;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+.fc-btn{flex:1;padding:16px;border-radius:14px;border:none;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;}
 .fc-btn.again{background:rgba(255,59,48,0.1);color:var(--red);}
 .fc-btn.knew{background:rgba(52,199,89,0.12);color:var(--green);}
 /* VOCAB NOTE */
 .vocab-note-item{background:white;border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
-.vocab-note-phrase{font-size:16px;font-weight:700;color:var(--blue);margin-bottom:3px;}
-.vocab-note-context{font-size:13px;color:var(--muted);line-height:1.5;}
+.vocab-note-phrase{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:3px;}
+.vocab-note-context{font-size:15px;color:var(--muted);line-height:1.5;}
 .del-btn{background:transparent;border:none;color:#ddd;font-size:20px;cursor:pointer;flex-shrink:0;}
 /* ANALYSIS */
 .stat-card{background:white;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
@@ -173,7 +173,7 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 </head>
 <body>
 <header>
-  <div class="app-title">✨ English with AI</div>
+  <div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:20px;">🗣️</div><div><div class="app-title">Shaberi with AI</div><div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:-2px;">AI英会話・読解アプリ</div></div></div>
   <button class="api-status ng" id="api-status-btn" onclick="showApiModal()">APIキー設定</button>
 </header>
 <div class="modal-overlay" id="api-modal">
@@ -333,13 +333,18 @@ async function sendMessage(){
   document.getElementById('messages').appendChild(turn);scrollBottom();
   isLoading=true;document.getElementById('send-btn').disabled=true;avatarState('talking');
   conversationHistory.push({role:'user',parts:[{text:text}]});
-  var sys='You are a friendly English conversation partner for Japanese learners. For EVERY message respond ONLY in valid JSON with these keys: {"check":"Correct the user English encouragingly","natural":"1-2 more natural ways to say it","natural_jp":"Japanese translation of natural","reply":"Friendly English reply 1-3 sentences","japanese":"Japanese translation of reply only","level":"TOEIC level A1/A2/B1/B2/C1/C2","mistake":"Grammar mistake in Japanese max 15 chars or empty string"}';
+  var sys='Respond ONLY with a JSON object. No other text. Format: {"check":"corrected English with encouragement","natural":"1-2 natural alternatives","natural_jp":"Japanese translation of natural","reply":"friendly English reply 1-3 sentences","japanese":"Japanese translation of reply","level":"A1 or A2 or B1 or B2 or C1 or C2","mistake":"grammar mistake in Japanese under 15 chars or empty"}';
   try{
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:conversationHistory,generationConfig:{responseMimeType:'application/json',maxOutputTokens:1000}})});
+    // システムプロンプトをユーザーメッセージの前に追加
+    var messages=[{role:'user',parts:[{text:sys+'\n\nUser: '+text}]}];
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:messages,generationConfig:{maxOutputTokens:1000,temperature:0.3}})});
     var data=await res.json();
     if(data.error)throw new Error(data.error.message);
     var raw=data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]?data.candidates[0].content.parts[0].text:'{}';
-    var p;try{p=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch(e){p={check:raw,natural:'',natural_jp:'',reply:'',japanese:'',level:'',mistake:''};}
+    // JSONを確実に抽出
+    var jsonMatch=raw.match(/\{[\s\S]*\}/);
+    var p;
+    try{p=JSON.parse(jsonMatch?jsonMatch[0]:raw);}catch(e){p={check:raw,natural:'',natural_jp:'',reply:'',japanese:'',level:'',mistake:''};}
     conversationHistory.push({role:'model',parts:[{text:p.reply||raw}]});
     if(p.level){localStorage.setItem('user_level',p.level);document.getElementById('level-text').textContent=levelLabel(p.level);document.getElementById('level-badge').style.display='block';}
     if(p.mistake&&p.mistake.trim()){var m=JSON.parse(localStorage.getItem('mistake_log')||'[]');m.push(p.mistake.trim());if(m.length>100)m=m.slice(-100);localStorage.setItem('mistake_log',JSON.stringify(m));}
@@ -368,22 +373,97 @@ async function analyze(){
   var text=document.getElementById('reading-input').value.trim();
   if(!text){alert('英文を入力してください');return;}
   if(!apiKey){showApiModal();return;}
-  var btn=document.getElementById('analyze-btn');btn.disabled=true;btn.textContent='⏳ 分析中...';
-  ['summary','structure','quiz','rvocab'].forEach(function(id){var el=document.getElementById(id+'-content')||document.getElementById('r'+id+'-content');if(document.getElementById(id+'-content'))document.getElementById(id+'-content').innerHTML='<div class="loading"><div class="spinner"></div>AIが分析しています...</div>';document.getElementById('rtab-'+id).disabled=false;});
-  document.getElementById('to-structure').style.display='none';document.getElementById('to-quiz').style.display='none';document.getElementById('to-rvocab').style.display='none';
+  var btn=document.getElementById('analyze-btn');
+  btn.disabled=true;
+  btn.textContent='⏳ 分析中...';
+
+  // タブ有効化・ローディング
+  ['summary','structure','quiz','rvocab'].forEach(function(id){
+    document.getElementById('rtab-'+id).disabled=false;
+  });
+  document.getElementById('summary-content').innerHTML='<div class="loading"><div class="spinner"></div>分析中...</div>';
+  document.getElementById('structure-content').innerHTML='';
+  document.getElementById('quiz-content').innerHTML='';
+  document.getElementById('rvocab-content').innerHTML='';
+  document.getElementById('to-structure').style.display='none';
+  document.getElementById('to-quiz').style.display='none';
+  document.getElementById('to-rvocab').style.display='none';
   showRTab('summary');
-  var prompt='You are an expert English learning assistant for Japanese learners. Analyze this English text and respond ONLY in valid JSON no markdown. Text: ['+text.slice(0,2000)+'] Respond: {"summary":{"overview":"2-3 sentence Japanese summary","points":["point1 in Japanese","point2","point3"]},"structure":[{"sentence":"verbatim complex sentence from text","analysis":"Japanese grammar explanation max 80 chars","translation":"Natural Japanese translation"}],"questions":[{"question":"TOEIC question in English","choices":["A. ...","B. ...","C. ...","D. ..."],"answer":0,"explanation":"Japanese explanation max 60 chars"}],"vocab":[{"word":"word","pos":"noun/verb/adj/adv","meaning":"Japanese meaning","example":"Original example sentence","example_jp":"Japanese translation"}]} Rules: summary.points exactly 3, structure exactly 3, questions exactly 3, vocab exactly 5 words TOEIC 880-900 level advanced only NO basic words';
+
+  // gemini-2.0-flash（高速・安定）
+  var model='gemini-2.0-flash';
+  var prompt='Analyze this English text for Japanese learners. Respond ONLY in JSON, no markdown.\n\nText: '+text.slice(0,1500)+'\n\nJSON format:\n{"summary":{"overview":"Japanese 2-3 sentence summary","points":["point1","point2","point3"]},"structure":[{"sentence":"complex sentence from text","analysis":"Japanese grammar note max 60 chars","translation":"Japanese translation"},{"sentence":"another sentence","analysis":"Japanese grammar note","translation":"Japanese translation"},{"sentence":"third sentence","analysis":"Japanese grammar note","translation":"Japanese translation"}],"questions":[{"question":"English comprehension question","choices":["A. option","B. option","C. option","D. option"],"answer":0,"explanation":"Japanese explanation"},{"question":"question2","choices":["A. option","B. option","C. option","D. option"],"answer":1,"explanation":"Japanese explanation"},{"question":"question3","choices":["A. option","B. option","C. option","D. option"],"answer":2,"explanation":"Japanese explanation"}],"vocab":[{"word":"advanced word","pos":"noun","meaning":"Japanese meaning","example":"example sentence","example_jp":"Japanese translation"},{"word":"word2","pos":"verb","meaning":"meaning2","example":"example2","example_jp":"jp2"},{"word":"word3","pos":"adj","meaning":"meaning3","example":"example3","example_jp":"jp3"},{"word":"word4","pos":"noun","meaning":"meaning4","example":"example4","example_jp":"jp4"},{"word":"word5","pos":"adv","meaning":"meaning5","example":"example5","example_jp":"jp5"}]}\n\nRules: vocab must be TOEIC 800+ level words only, no basic words.';
+
   try{
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:3000}})});
-    var data=await res.json();if(data.error)throw new Error(data.error.message);
-    var raw=data.candidates[0].content.parts[0].text;
-    var p=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    if(p.summary){var sc=document.getElementById('summary-content');sc.innerHTML='<div class="card"><span class="summary-badge">🤖 AI要約</span><div style="font-size:15px;line-height:1.85">'+esc(p.summary.overview)+'</div><div class="summary-points">'+(p.summary.points||[]).map(function(pt){return '<div class="summary-point"><div class="dot"></div><div>'+esc(pt)+'</div></div>';}).join('')+'</div></div>';document.getElementById('to-structure').style.display='block';}
-    if(p.structure){var stc=document.getElementById('structure-content');stc.innerHTML='<div style="margin-bottom:12px"><span class="structure-badge">🔍 構文解説</span></div>'+p.structure.map(function(item,i){return '<div class="sentence-block"><div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px">文'+(i+1)+'</div><div class="sentence-en">'+esc(item.sentence)+'</div><div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:4px">📌 解説</div><div class="structure-note">'+esc(item.analysis)+'</div><div class="structure-jp">🇯🇵 '+esc(item.translation)+'</div></div>';}).join('');document.getElementById('to-quiz').style.display='block';}
-    if(p.questions){answeredCount=0;totalQuestions=p.questions.length;var qc=document.getElementById('quiz-content');qc.innerHTML=p.questions.map(function(q,qi){return '<div class="question-card" id="qcard-'+qi+'"><span class="q-badge">Q'+(qi+1)+' / '+p.questions.length+'</span><div class="q-text">'+esc(q.question)+'</div>'+q.choices.map(function(c,ci){return '<div class="choice" id="choice-'+qi+'-'+ci+'" onclick="selectChoice('+qi+','+ci+','+q.answer+')"><div class="choice-letter">'+'ABCD'[ci]+'</div><div class="choice-text">'+esc(c.replace(/^[A-D]\.\s*/,''))+'</div></div>';}).join('')+'<div class="explanation" id="exp-'+qi+'">✅ '+esc(q.explanation)+'</div></div>';}).join('');}
-    if(p.vocab){var vc=document.getElementById('rvocab-content');vc.innerHTML=p.vocab.map(function(v){return '<div class="vocab-item"><div><span class="vocab-word">'+esc(v.word)+'</span><span class="vocab-pos">'+esc(v.pos)+'</span></div><div class="vocab-meaning">'+esc(v.meaning)+'</div><div class="vocab-example">'+esc(v.example)+'<div class="vocab-example-jp">'+esc(v.example_jp)+'</div></div></div>';}).join('');p.vocab.forEach(function(v){if(!flashDeck.some(function(d){return d.word.toLowerCase()===v.word.toLowerCase();}))flashDeck.push(Object.assign({},v,{addedAt:new Date().toLocaleDateString('ja-JP')}));});localStorage.setItem('flash_deck',JSON.stringify(flashDeck));}
-  }catch(err){document.getElementById('summary-content').innerHTML='<div class="card" style="color:var(--red)">⚠️ '+esc(err.message)+'</div>';}
-  finally{btn.disabled=false;btn.textContent='✨ 分析スタート';}
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+apiKey,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],
+        generationConfig:{maxOutputTokens:2000,temperature:0.3}
+      })
+    });
+    var data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+
+    var raw='';
+    if(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts){
+      raw=data.candidates[0].content.parts[0].text||'';
+    }
+    // JSONを抽出
+    var jsonMatch=raw.match(/\{[\s\S]*\}/);
+    if(!jsonMatch)throw new Error('AIの返答が不正です');
+    var p=JSON.parse(jsonMatch[0]);
+
+    // 要約
+    if(p.summary){
+      var sc=document.getElementById('summary-content');
+      sc.innerHTML='<div class="card"><span class="summary-badge">🤖 AI要約</span><div style="font-size:17px;line-height:1.85">'+esc(p.summary.overview)+'</div><div class="summary-points">'+(p.summary.points||[]).map(function(pt){return '<div class="summary-point"><div class="dot"></div><div>'+esc(pt)+'</div></div>';}).join('')+'</div></div>';
+      document.getElementById('to-structure').style.display='block';
+    }
+
+    // 構文
+    if(p.structure&&p.structure.length){
+      var stc=document.getElementById('structure-content');
+      stc.innerHTML='<div style="margin-bottom:12px"><span class="structure-badge">🔍 構文解説</span></div>'+p.structure.map(function(item,i){
+        return '<div class="sentence-block"><div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px">文'+(i+1)+'</div><div class="sentence-en">'+esc(item.sentence)+'</div><div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:4px">📌 解説</div><div class="structure-note">'+esc(item.analysis)+'</div><div class="structure-jp">🇯🇵 '+esc(item.translation)+'</div></div>';
+      }).join('');
+      document.getElementById('to-quiz').style.display='block';
+    }
+
+    // 問題
+    if(p.questions&&p.questions.length){
+      answeredCount=0;totalQuestions=p.questions.length;
+      var qc=document.getElementById('quiz-content');
+      qc.innerHTML=p.questions.map(function(q,qi){
+        return '<div class="question-card" id="qcard-'+qi+'"><span class="q-badge">Q'+(qi+1)+' / '+p.questions.length+'</span><div class="q-text">'+esc(q.question)+'</div>'+q.choices.map(function(c,ci){
+          return '<div class="choice" id="choice-'+qi+'-'+ci+'" onclick="selectChoice('+qi+','+ci+','+q.answer+')"><div class="choice-letter">'+'ABCD'[ci]+'</div><div class="choice-text">'+esc(c.replace(/^[A-D][\.\.]\s*/,''))+'</div></div>';
+        }).join('')+'<div class="explanation" id="exp-'+qi+'">✅ '+esc(q.explanation)+'</div></div>';
+      }).join('');
+    }
+
+    // 単語
+    if(p.vocab&&p.vocab.length){
+      var vc=document.getElementById('rvocab-content');
+      vc.innerHTML=p.vocab.map(function(v){
+        return '<div class="vocab-item"><div><span class="vocab-word">'+esc(v.word)+'</span><span class="vocab-pos">'+esc(v.pos)+'</span></div><div class="vocab-meaning">'+esc(v.meaning)+'</div><div class="vocab-example">'+esc(v.example)+'<div class="vocab-example-jp">'+esc(v.example_jp)+'</div></div></div>';
+      }).join('');
+      // フラッシュカードに追加
+      p.vocab.forEach(function(v){
+        if(!flashDeck.some(function(d){return d.word.toLowerCase()===v.word.toLowerCase();})){
+          flashDeck.push(Object.assign({},v,{addedAt:new Date().toLocaleDateString('ja-JP')}));
+        }
+      });
+      localStorage.setItem('flash_deck',JSON.stringify(flashDeck));
+      document.getElementById('to-rvocab').style.display='block';
+    }
+
+  }catch(err){
+    document.getElementById('summary-content').innerHTML='<div class="card" style="color:var(--red);font-size:16px;">⚠️ エラー: '+esc(err.message)+'<br><br><span style="font-size:14px;color:var(--muted)">APIキーを確認するか、少し待ってから再試行してください</span></div>';
+  }finally{
+    btn.disabled=false;
+    btn.textContent='✨ 分析スタート';
+  }
 }
 function selectChoice(qi,ci,correct){var card=document.getElementById('qcard-'+qi);if(card.dataset.answered)return;card.dataset.answered='1';answeredCount++;for(var i=0;i<4;i++){var el=document.getElementById('choice-'+qi+'-'+i);if(!el)continue;if(i===correct)el.classList.add('correct');else if(i===ci&&ci!==correct)el.classList.add('wrong');}document.getElementById('exp-'+qi).classList.add('show');if(answeredCount>=totalQuestions)document.getElementById('to-rvocab').style.display='block';}
 function goToFlash(){showView('flash');renderFlash();}
