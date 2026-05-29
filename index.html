@@ -178,9 +178,9 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 </header>
 <div class="modal-overlay" id="api-modal">
   <div class="modal">
-    <h3>🔑 Gemini APIキー</h3>
-    <p>🆓 <strong>Groq（推奨）：</strong><a href="https://console.groq.com/keys" target="_blank" style="color:var(--blue)">console.groq.com/keys</a><br>クレカ不要・高速・1日1,000回無料<br><br>🔵 <strong>Gemini：</strong><a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue)">aistudio.google.com/apikey</a><br>クレカ不要・1日1,500回無料</p>
-    <input type="password" id="api-key-input" placeholder="Groq: gsk_... / Gemini: AIza..."/>
+    <h3>🔑 Groq APIキー</h3>
+    <p><a href="https://console.groq.com/keys" target="_blank" style="color:var(--blue)">console.groq.com/keys</a> で無料取得<br>クレカ不要・高速・1日1,000回無料<br>Googleアカウントでログイン → Create API Key</p>
+    <input type="password" id="api-key-input" placeholder="gsk_... で始まるキー"/>
     <button class="modal-btn" onclick="saveApiKey()">保存して閉じる</button>
     <button onclick="closeApiModal()" style="width:100%;margin-top:10px;padding:12px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;font-family:inherit;">キャンセル</button>
   </div>
@@ -194,7 +194,6 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
       <option value="groq:llama-3.3-70b-versatile">Llama 3.3 70B（高精度）</option>
       <option value="groq:llama-3.1-8b-instant">Llama 3.1 8B（超高速）</option>
       <option value="groq:gemma2-9b-it">Gemma 2 9B（安定）</option>
-      <option value="gemini:gemini-2.0-flash">Gemini 2.0 Flash</option>
     </select>
   </div>
 </div>
@@ -289,7 +288,7 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
   <button class="nav-btn" id="nav-analysis" onclick="showView('analysis')"><span class="nav-icon">📈</span><span class="nav-label">分析</span></button>
 </nav>
 <script>
-var apiKey=localStorage.getItem('gemini_api_key')||'';
+var apiKey=localStorage.getItem('groq_api_key')||'';
 var currentModel=localStorage.getItem('shaberi_model')||'groq:llama-3.3-70b-versatile';
 var vocabList=JSON.parse(localStorage.getItem('vocab_list')||'[]');
 var chatSessions=JSON.parse(localStorage.getItem('chat_sessions')||'[]');
@@ -324,7 +323,7 @@ function changeModel(val){
 function updateApiStatus(){var btn=document.getElementById('api-status-btn');if(apiKey){btn.textContent='✓ API接続済';btn.className='api-status ok';}else{btn.textContent='APIキー設定';btn.className='api-status ng';}}
 function showApiModal(){document.getElementById('api-modal').classList.add('show');}
 function closeApiModal(){document.getElementById('api-modal').classList.remove('show');}
-function saveApiKey(){var val=document.getElementById('api-key-input').value.trim();if(val.length<10){alert('APIキーを入力してください');return;}apiKey=val;localStorage.setItem('gemini_api_key',apiKey);updateApiStatus();closeApiModal();}
+function saveApiKey(){var val=document.getElementById('api-key-input').value.trim();if(val.length<10){alert('APIキーを入力してください');return;}apiKey=val;localStorage.setItem('groq_api_key',apiKey);updateApiStatus();closeApiModal();}
 function showView(name){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('view-'+name).classList.add('active');document.getElementById('nav-'+name).classList.add('active');if(name==='vocab')renderVocab();if(name==='analysis')renderAnalysis();if(name==='flash')renderFlash();}
 function setupSpeech(){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){document.getElementById('mic-btn').style.opacity='0.3';return;}recognition=new SR();recognition.lang='en-US';recognition.continuous=true;recognition.interimResults=true;recognition.onresult=function(e){var t=Array.from(e.results).map(function(r){return r[0].transcript;}).join('');var el=document.getElementById('user-input');el.value=t;autoResize(el);};recognition.onerror=function(e){if(e.error==='no-speech'||e.error==='network'){if(isRecording){try{recognition.stop();}catch(er){}setTimeout(function(){if(isRecording)try{recognition.start();}catch(er){};},200);}return;}stopMic();};recognition.onend=function(){if(isRecording)setTimeout(function(){try{recognition.start();}catch(er){};},100);};}
 function toggleMic(){if(!recognition)return;isRecording?stopMic():startMic();}
@@ -435,26 +434,37 @@ async function analyze(){
 
   // gemini-2.0-flash（高速・安定）
   var model=currentModel;
-  var prompt='Analyze this English text for Japanese learners. Respond ONLY in JSON, no markdown.\n\nText: '+text.slice(0,1500)+'\n\nJSON format:\n{"summary":{"overview":"Japanese 2-3 sentence summary","points":["point1","point2","point3"]},"structure":[{"sentence":"complex sentence from text","analysis":"Japanese grammar note max 60 chars","translation":"Japanese translation"},{"sentence":"another sentence","analysis":"Japanese grammar note","translation":"Japanese translation"},{"sentence":"third sentence","analysis":"Japanese grammar note","translation":"Japanese translation"}],"questions":[{"question":"English comprehension question","choices":["A. option","B. option","C. option","D. option"],"answer":0,"explanation":"Japanese explanation"},{"question":"question2","choices":["A. option","B. option","C. option","D. option"],"answer":1,"explanation":"Japanese explanation"},{"question":"question3","choices":["A. option","B. option","C. option","D. option"],"answer":2,"explanation":"Japanese explanation"}],"vocab":[{"word":"advanced word","pos":"noun","meaning":"Japanese meaning","example":"example sentence","example_jp":"Japanese translation"},{"word":"word2","pos":"verb","meaning":"meaning2","example":"example2","example_jp":"jp2"},{"word":"word3","pos":"adj","meaning":"meaning3","example":"example3","example_jp":"jp3"},{"word":"word4","pos":"noun","meaning":"meaning4","example":"example4","example_jp":"jp4"},{"word":"word5","pos":"adv","meaning":"meaning5","example":"example5","example_jp":"jp5"}]}\n\nRules: vocab must be TOEIC 800+ level words only, no basic words.';
+  var prompt='You are an English learning assistant for Japanese learners. Analyze the text below and respond ONLY with a JSON object.\n\nTEXT:'+text.slice(0,800)+'\n\nRespond with this JSON (all Japanese values in Japanese):\n{"summary":{"overview":"2 sentence Japanese summary","points":["Japanese point 1","Japanese point 2","Japanese point 3"]},"structure":[{"sentence":"exact sentence from text","analysis":"Japanese grammar note","translation":"Japanese translation"},{"sentence":"exact sentence 2","analysis":"Japanese note","translation":"Japanese translation"},{"sentence":"exact sentence 3","analysis":"Japanese note","translation":"Japanese translation"}],"questions":[{"question":"comprehension question in English","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":0,"explanation":"Japanese explanation"},{"question":"question 2","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":1,"explanation":"Japanese"},{"question":"question 3","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":0,"explanation":"Japanese"}],"vocab":[{"word":"TOEIC800+word","pos":"noun","meaning":"Japanese","example":"example","example_jp":"Japanese"},{"word":"word2","pos":"verb","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word3","pos":"adj","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word4","pos":"noun","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word5","pos":"adv","meaning":"Japanese","example":"ex","example_jp":"jp"}]}';
 
   try{
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+apiKey,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:prompt}]}],
-        generationConfig:{maxOutputTokens:2000,temperature:0.3}
-      })
-    });
-    var data=await res.json();
-    if(data.error)throw new Error(data.error.message);
-
-    var raw='';
-    if(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts){
-      raw=data.candidates[0].content.parts[0].text||'';
+    var rawR='';
+    if(currentModel.startsWith('groq:')){
+      var groqModelR=currentModel.replace('groq:','');
+      var resR=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+        body:JSON.stringify({
+          model:groqModelR,
+          messages:[{role:'user',content:prompt}],
+          max_tokens:2000,temperature:0.3,
+          response_format:{type:'json_object'}
+        })
+      });
+      var dataR=await resR.json();
+      if(dataR.error)throw new Error(dataR.error.message);
+      rawR=dataR.choices&&dataR.choices[0]?dataR.choices[0].message.content:'{}';
+    }else{
+      var geminiModelR=currentModel.replace('gemini:','');
+      var resR=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+geminiModelR+':generateContent?key='+apiKey,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:2000,temperature:0.3}})
+      });
+      var dataR=await resR.json();
+      if(dataR.error)throw new Error(dataR.error.message);
+      rawR=dataR.candidates&&dataR.candidates[0]&&dataR.candidates[0].content&&dataR.candidates[0].content.parts?dataR.candidates[0].content.parts[0].text||'{}':'{}';
     }
-    // JSONを抽出
-    var jsonMatch=raw.match(/\{[\s\S]*\}/);
+    var jsonMatch=rawR.match(/\{[\s\S]*\}/);
     if(!jsonMatch)throw new Error('AIの返答が不正です');
     var p=JSON.parse(jsonMatch[0]);
 
