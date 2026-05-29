@@ -179,8 +179,8 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 <div class="modal-overlay" id="api-modal">
   <div class="modal">
     <h3>🔑 Gemini APIキー</h3>
-    <p><a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue)">aistudio.google.com/apikey</a> で無料取得<br>クレジットカード不要・1日1,500回まで無料</p>
-    <input type="password" id="api-key-input" placeholder="AIza... または AQ. で始まるキー"/>
+    <p>🆓 <strong>Groq（推奨）：</strong><a href="https://console.groq.com/keys" target="_blank" style="color:var(--blue)">console.groq.com/keys</a><br>クレカ不要・高速・1日1,000回無料<br><br>🔵 <strong>Gemini：</strong><a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue)">aistudio.google.com/apikey</a><br>クレカ不要・1日1,500回無料</p>
+    <input type="password" id="api-key-input" placeholder="Groq: gsk_... / Gemini: AIza..."/>
     <button class="modal-btn" onclick="saveApiKey()">保存して閉じる</button>
     <button onclick="closeApiModal()" style="width:100%;margin-top:10px;padding:12px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;font-family:inherit;">キャンセル</button>
   </div>
@@ -191,10 +191,10 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
   <div style="display:flex;align-items:center;gap:8px;background:white;border-radius:14px;padding:10px 14px;box-shadow:0 1px 3px rgba(0,0,0,0.07);">
     <span style="font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;">🤖 モデル</span>
     <select id="model-select" onchange="changeModel(this.value)" style="flex:1;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--text);font-family:inherit;outline:none;cursor:pointer;">
-      <option value="gemini-2.0-flash">gemini-2.0-flash（推奨）</option>
-      <option value="gemini-1.5-flash">gemini-1.5-flash（安定）</option>
-      <option value="gemini-1.5-pro">gemini-1.5-pro（高精度）</option>
-      <option value="gemini-2.5-flash">gemini-2.5-flash（最新）</option>
+      <option value="groq:llama-3.3-70b-versatile">Llama 3.3 70B（高精度）</option>
+      <option value="groq:llama-3.1-8b-instant">Llama 3.1 8B（超高速）</option>
+      <option value="groq:gemma2-9b-it">Gemma 2 9B（安定）</option>
+      <option value="gemini:gemini-2.0-flash">Gemini 2.0 Flash</option>
     </select>
   </div>
 </div>
@@ -290,7 +290,7 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 </nav>
 <script>
 var apiKey=localStorage.getItem('gemini_api_key')||'';
-var currentModel=localStorage.getItem('gemini_model')||'gemini-2.0-flash';
+var currentModel=localStorage.getItem('shaberi_model')||'groq:llama-3.3-70b-versatile';
 var vocabList=JSON.parse(localStorage.getItem('vocab_list')||'[]');
 var chatSessions=JSON.parse(localStorage.getItem('chat_sessions')||'[]');
 var currentSession=null;
@@ -310,7 +310,7 @@ var samples=[
 ];
 window.onload=function(){
   var sel=document.getElementById('model-select');
-  if(sel)sel.value=currentModel;
+  if(sel){currentModel=localStorage.getItem('shaberi_model')||'groq:llama-3.3-70b-versatile';sel.value=currentModel;}
   updateApiStatus();
   updateStreak();
   var lv=localStorage.getItem('user_level');
@@ -353,15 +353,40 @@ async function sendMessage(){
   conversationHistory.push({role:'user',parts:[{text:text}]});
   var sys='Respond ONLY with a JSON object. No other text. Format: {"check":"corrected English with encouragement","natural":"1-2 natural alternatives","natural_jp":"Japanese translation of natural","reply":"friendly English reply 1-3 sentences","japanese":"Japanese translation of reply","level":"A1 or A2 or B1 or B2 or C1 or C2","mistake":"grammar mistake in Japanese under 15 chars or empty"}';
   try{
-    // システムプロンプトをユーザーメッセージの前に追加
-    var messages=[{role:'user',parts:[{text:sys+'\n\nUser: '+text}]}];
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+currentModel+':generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:messages,generationConfig:{maxOutputTokens:1000,temperature:0.3}})});
-    var data=await res.json();
-    if(data.error)throw new Error(data.error.message);
-    var raw=data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]?data.candidates[0].content.parts[0].text:'{}';
-    // JSONを確実に抽出
-    var jsonMatch=raw.match(/\{[\s\S]*\}/);
-    var p;
+    var raw='';
+    var jsonMatch,p;
+    if(currentModel.startsWith('groq:')){
+      // Groq API
+      var groqModel=currentModel.replace('groq:','');
+      var groqRes=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+        body:JSON.stringify({
+          model:groqModel,
+          messages:[
+            {role:'system',content:sys},
+            {role:'user',content:text}
+          ],
+          max_tokens:1000,temperature:0.3,
+          response_format:{type:'json_object'}
+        })
+      });
+      var groqData=await groqRes.json();
+      if(groqData.error)throw new Error(groqData.error.message);
+      raw=groqData.choices&&groqData.choices[0]?groqData.choices[0].message.content:'{}';
+    }else{
+      // Gemini API
+      var geminiModel=currentModel.replace('gemini:','');
+      var geminiRes=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+geminiModel+':generateContent?key='+apiKey,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:sys+'\n\nUser: '+text}]}],generationConfig:{maxOutputTokens:1000,temperature:0.3}})
+      });
+      var geminiData=await geminiRes.json();
+      if(geminiData.error)throw new Error(geminiData.error.message);
+      raw=geminiData.candidates&&geminiData.candidates[0]&&geminiData.candidates[0].content&&geminiData.candidates[0].content.parts&&geminiData.candidates[0].content.parts[0]?geminiData.candidates[0].content.parts[0].text:'{}';
+    }
+    jsonMatch=raw.match(/\{[\s\S]*\}/);
     try{p=JSON.parse(jsonMatch?jsonMatch[0]:raw);}catch(e){p={check:raw,natural:'',natural_jp:'',reply:'',japanese:'',level:'',mistake:''};}
     conversationHistory.push({role:'model',parts:[{text:p.reply||raw}]});
     if(p.level){localStorage.setItem('user_level',p.level);document.getElementById('level-text').textContent=levelLabel(p.level);document.getElementById('level-badge').style.display='block';}
