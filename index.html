@@ -187,7 +187,18 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 </div>
 <!-- VIEW: 会話 -->
 <div class="view active" id="view-chat">
-  <div class="avatar-section">
+  <div style="padding:8px 16px 0;flex-shrink:0;">
+  <div style="display:flex;align-items:center;gap:8px;background:white;border-radius:14px;padding:10px 14px;box-shadow:0 1px 3px rgba(0,0,0,0.07);">
+    <span style="font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;">🤖 モデル</span>
+    <select id="model-select" onchange="changeModel(this.value)" style="flex:1;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--text);font-family:inherit;outline:none;cursor:pointer;">
+      <option value="gemini-2.0-flash">gemini-2.0-flash（推奨）</option>
+      <option value="gemini-1.5-flash">gemini-1.5-flash（安定）</option>
+      <option value="gemini-1.5-pro">gemini-1.5-pro（高精度）</option>
+      <option value="gemini-2.5-flash">gemini-2.5-flash（最新）</option>
+    </select>
+  </div>
+</div>
+<div class="avatar-section">
     <div class="avatar-container" id="avatar-container">
       <div class="avatar-glow"></div>
       <div class="avatar-ring-white"></div>
@@ -279,6 +290,7 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 </nav>
 <script>
 var apiKey=localStorage.getItem('gemini_api_key')||'';
+var currentModel=localStorage.getItem('gemini_model')||'gemini-2.0-flash';
 var vocabList=JSON.parse(localStorage.getItem('vocab_list')||'[]');
 var chatSessions=JSON.parse(localStorage.getItem('chat_sessions')||'[]');
 var currentSession=null;
@@ -297,12 +309,18 @@ var samples=[
   "Scientists have discovered a new species of deep-sea fish capable of surviving at depths exceeding 8,000 meters. The creature, found in the Pacific Ocean's Mariana Trench, possesses a unique protein structure that prevents its cells from being crushed by extreme water pressure. This discovery could provide insights into how life adapts to hostile environments, with potential applications in medicine and materials science."
 ];
 window.onload=function(){
+  var sel=document.getElementById('model-select');
+  if(sel)sel.value=currentModel;
   updateApiStatus();
   updateStreak();
   var lv=localStorage.getItem('user_level');
   if(lv){document.getElementById('level-text').textContent=levelLabel(lv);document.getElementById('level-badge').style.display='block';}
   setupSpeech();renderVocab();renderFlash();
 };
+function changeModel(val){
+  currentModel=val;
+  localStorage.setItem('gemini_model',val);
+}
 function updateApiStatus(){var btn=document.getElementById('api-status-btn');if(apiKey){btn.textContent='✓ API接続済';btn.className='api-status ok';}else{btn.textContent='APIキー設定';btn.className='api-status ng';}}
 function showApiModal(){document.getElementById('api-modal').classList.add('show');}
 function closeApiModal(){document.getElementById('api-modal').classList.remove('show');}
@@ -337,7 +355,7 @@ async function sendMessage(){
   try{
     // システムプロンプトをユーザーメッセージの前に追加
     var messages=[{role:'user',parts:[{text:sys+'\n\nUser: '+text}]}];
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:messages,generationConfig:{maxOutputTokens:1000,temperature:0.3}})});
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+currentModel+':generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:messages,generationConfig:{maxOutputTokens:1000,temperature:0.3}})});
     var data=await res.json();
     if(data.error)throw new Error(data.error.message);
     var raw=data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]?data.candidates[0].content.parts[0].text:'{}';
@@ -391,7 +409,7 @@ async function analyze(){
   showRTab('summary');
 
   // gemini-2.0-flash（高速・安定）
-  var model='gemini-2.0-flash';
+  var model=currentModel;
   var prompt='Analyze this English text for Japanese learners. Respond ONLY in JSON, no markdown.\n\nText: '+text.slice(0,1500)+'\n\nJSON format:\n{"summary":{"overview":"Japanese 2-3 sentence summary","points":["point1","point2","point3"]},"structure":[{"sentence":"complex sentence from text","analysis":"Japanese grammar note max 60 chars","translation":"Japanese translation"},{"sentence":"another sentence","analysis":"Japanese grammar note","translation":"Japanese translation"},{"sentence":"third sentence","analysis":"Japanese grammar note","translation":"Japanese translation"}],"questions":[{"question":"English comprehension question","choices":["A. option","B. option","C. option","D. option"],"answer":0,"explanation":"Japanese explanation"},{"question":"question2","choices":["A. option","B. option","C. option","D. option"],"answer":1,"explanation":"Japanese explanation"},{"question":"question3","choices":["A. option","B. option","C. option","D. option"],"answer":2,"explanation":"Japanese explanation"}],"vocab":[{"word":"advanced word","pos":"noun","meaning":"Japanese meaning","example":"example sentence","example_jp":"Japanese translation"},{"word":"word2","pos":"verb","meaning":"meaning2","example":"example2","example_jp":"jp2"},{"word":"word3","pos":"adj","meaning":"meaning3","example":"example3","example_jp":"jp3"},{"word":"word4","pos":"noun","meaning":"meaning4","example":"example4","example_jp":"jp4"},{"word":"word5","pos":"adv","meaning":"meaning5","example":"example5","example_jp":"jp5"}]}\n\nRules: vocab must be TOEIC 800+ level words only, no basic words.';
 
   try{
