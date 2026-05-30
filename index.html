@@ -386,7 +386,7 @@ async function sendMessage(){
   document.getElementById('messages').appendChild(turn);scrollBottom();
   isLoading=true;document.getElementById('send-btn').disabled=true;avatarState('talking');
   conversationHistory.push({role:'user',parts:[{text:text}]});
-  var sys='You are a friendly English conversation partner for Japanese learners. The user may mix Japanese and English (Japanglish). Always understand the full meaning including any Japanese words or phrases, and convert everything into natural English.\n\nALWAYS respond with a valid JSON object. NEVER omit any field. NEVER add text outside the JSON.\n\nRequired JSON format (ALL fields mandatory):\n{\n"check": "Rewrite the ENTIRE user message in correct natural English. If Japanese words were used, translate them into English too. Be encouraging. Always fill this.",\n"natural": "Give 1-2 more natural or native-sounding full English alternatives. Replace ALL Japanese parts with English. Always fill this.",\n"natural_jp": "Japanese translation of the natural alternatives above. Always fill this in Japanese.",\n"reply": "Your friendly conversational reply in English. 1-3 sentences. Always fill this.",\n"japanese": "Japanese translation of your reply above. Always fill this in Japanese.",\n"level": "Estimate TOEIC level: A1 or A2 or B1 or B2 or C1 or C2",\n"mistake": "Describe the main grammar or unnatural expression in Japanese under 15 characters. Empty string if perfect."\n}\n\nIMPORTANT: natural_jp and japanese fields MUST always be in Japanese. Never leave them empty.';
+  var sys='You are a friendly English conversation partner for Japanese learners. The user speaks only English.\n\nALWAYS respond with a JSON object. NEVER add any text outside the JSON. Every field is required.\n\nJSON format:\n{"check":"Correct the user English naturally and encouragingly. Always fill.","natural":"1-2 more native-sounding English alternatives. Always fill.","natural_jp":"【必須・必ず日本語で】上記の自然な表現の日本語訳。絶対に空にしない。","reply":"Your friendly English reply. 1-3 sentences. Always fill.","japanese":"【必須・必ず日本語で】返答の日本語訳。絶対に空にしない。例：今日は何を食べましたか？","level":"A1 or A2 or B1 or B2 or C1 or C2","mistake":"文法ミスを日本語15文字以内で。なければ空文字。"}\n\nCRITICAL: natural_jp and japanese MUST be written in Japanese characters (hiragana/katakana/kanji). If you write English there it is WRONG.';
   try{
     var raw='';
     var jsonMatch,p;
@@ -566,55 +566,48 @@ function renderStructure(data){
   if(!data) return;
   var el=document.getElementById('structure-content');
   if(!el) return;
-  var html='<div style="margin-bottom:16px"><span class="structure-badge">🔍 TOEIC900点コーチ 構文解説</span></div>';
+  var html='';
 
+  // 全文日本語訳
   if(data.full_translation){
-    html+='<div class="sentence-block"><div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:8px">🌐 全文の日本語訳</div><div style="font-size:15px;line-height:1.85">'+esc(data.full_translation)+'</div></div>';
+    html+='<div class="sentence-block">';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:8px">🌐 全文の日本語訳</div>';
+    html+='<div style="font-size:15px;line-height:1.9;color:var(--text)">'+esc(data.full_translation)+'</div>';
+    html+='</div>';
   }
 
-  if(data.vocab_sections&&data.vocab_sections.length){
-    data.vocab_sections.forEach(function(sec,si){
-      html+='<div class="sentence-block">';
-      html+='<div style="font-size:13px;font-weight:700;color:var(--orange);margin-bottom:8px">🎴 マスター例文['+(si+1)+']</div>';
-      html+='<div style="font-size:15px;line-height:1.8;color:var(--blue);font-style:italic;margin-bottom:6px">'+esc(sec.master_sentence)+'</div>';
-      html+='<div style="font-size:13px;color:var(--muted);margin-bottom:12px">【外資ビジネス和訳】'+esc(sec.master_translation)+'</div>';
-      if(sec.words&&sec.words.length){
-        html+='<div style="overflow-x:auto;margin-bottom:12px"><table style="width:100%;border-collapse:collapse;font-size:13px">';
-        html+='<tr style="background:var(--bg)"><th style="padding:8px;text-align:left;border:1px solid var(--border);font-weight:700">単語</th><th style="padding:8px;text-align:left;border:1px solid var(--border);font-weight:700">品詞</th><th style="padding:8px;text-align:left;border:1px solid var(--border);font-weight:700">意味</th><th style="padding:8px;text-align:left;border:1px solid var(--border);font-weight:700">類義語</th></tr>';
-        sec.words.forEach(function(w){
-          html+='<tr><td style="padding:8px;border:1px solid var(--border);font-weight:700;color:var(--blue)">'+esc(w.word)+'</td><td style="padding:8px;border:1px solid var(--border);color:var(--muted)">'+esc(w.pos)+'</td><td style="padding:8px;border:1px solid var(--border)">'+esc(w.meaning)+'</td><td style="padding:8px;border:1px solid var(--border);color:var(--muted)">'+esc(w.paraphrase)+'</td></tr>';
-        });
-        html+='</table></div>';
-      }
-      if(sec.extra_examples&&sec.extra_examples.length){
-        html+='<div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px">💡 追加例文</div>';
-        sec.extra_examples.forEach(function(ex){
-          html+='<div style="background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:6px"><div style="font-size:14px">'+esc(ex.sentence)+'</div><div style="font-size:13px;color:var(--muted);margin-top:4px">【訳】'+esc(ex.translation)+'</div></div>';
-        });
-      }
-      html+='</div>';
-    });
-  }
-
+  // チャンクごとの構文解説
   if(data.chunks&&data.chunks.length){
-    html+='<div class="sentence-block"><div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:8px">✂️ チャンク訳</div>';
-    data.chunks.forEach(function(chunk){
-      html+='<div style="background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--green)"><div style="font-size:14px;line-height:1.7">'+esc(chunk.english)+'</div><div style="font-size:13px;color:var(--muted);margin-top:4px">（'+esc(chunk.japanese)+'）</div></div>';
-    });
-    html+='</div>';
-  }
-
-  if(data.grammar_analysis&&data.grammar_analysis.length){
-    html+='<div class="sentence-block"><div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px">🔍 高難度文法の構文分解</div>';
-    data.grammar_analysis.forEach(function(g,gi){
-      html+='<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:6px">【第'+(gi+1)+'文】</div>';
-      html+='<div style="font-size:14px;color:var(--blue);font-style:italic;margin-bottom:6px;border-left:3px solid var(--red);padding-left:10px">'+esc(g.sentence)+'</div>';
-      html+='<div style="font-size:13px;color:var(--muted);margin-bottom:8px">【訳】'+esc(g.translation)+'</div>';
-      if(g.structure){html+='<div style="background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:6px"><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px">構文構造</div><div style="font-size:13px;line-height:1.7">'+esc(g.structure)+'</div></div>';}
-      if(g.toeic_point){html+='<div style="background:rgba(255,59,48,0.06);border-radius:10px;padding:10px 12px"><div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px">📌 TOEIC900点レベルの着眼点</div><div style="font-size:13px;line-height:1.7">'+esc(g.toeic_point)+'</div></div>';}
+    html+='<div style="font-size:13px;font-weight:700;color:var(--purple);margin:16px 0 10px;padding:0 2px">✂️ チャンクごとの構文解説</div>';
+    data.chunks.forEach(function(chunk,i){
+      html+='<div class="sentence-block" style="margin-bottom:10px">';
+      html+='<div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">Chunk '+(i+1)+'</div>';
+      // 英文
+      html+='<div style="font-size:15px;line-height:1.7;color:var(--blue);font-weight:600;margin-bottom:4px;border-left:3px solid var(--blue);padding-left:10px">'+esc(chunk.english)+'</div>';
+      // 日本語訳
+      html+='<div style="font-size:14px;color:var(--muted);margin-bottom:8px;padding-left:13px">'+esc(chunk.japanese)+'</div>';
+      // 構文
+      if(chunk.structure){
+        html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">';
+        html+='<span style="background:rgba(0,122,255,0.08);color:var(--blue);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px">'+esc(chunk.structure)+'</span>';
+        html+='</div>';
+      }
+      // 文法メモ
+      if(chunk.grammar_note){
+        html+='<div style="background:rgba(175,82,222,0.06);border-radius:8px;padding:8px 12px;margin-bottom:4px">';
+        html+='<div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:2px">📌 文法ポイント</div>';
+        html+='<div style="font-size:13px;line-height:1.6">'+esc(chunk.grammar_note)+'</div>';
+        html+='</div>';
+      }
+      // TOEICメモ
+      if(chunk.toeic_note){
+        html+='<div style="background:rgba(255,149,0,0.06);border-radius:8px;padding:8px 12px">';
+        html+='<div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:2px">🎯 TOEIC</div>';
+        html+='<div style="font-size:13px;line-height:1.6">'+esc(chunk.toeic_note)+'</div>';
+        html+='</div>';
+      }
       html+='</div>';
     });
-    html+='</div>';
   }
 
   el.innerHTML=html;
@@ -646,7 +639,7 @@ async function analyze(){
 
   // gemini-2.0-flash（高速・安定）
   var model=currentModel;
-  var prompt='You are a TOEIC 900-point English coach for Japanese business learners. Analyze the text and respond ONLY with a valid JSON object. No markdown, no extra text.\n\nTEXT: '+text.slice(0,1000)+'\n\nJSON structure:\n{"summary":{"overview":"2-3 sentence Japanese summary","points":["key point 1 in Japanese","key point 2","key point 3"]},"structure":{"full_translation":"Full natural Japanese translation of the entire text","vocab_sections":[{"master_sentence":"Original business sentence using multiple key words in bold with **asterisks**","master_translation":"Japanese translation of master sentence","words":[{"word":"word1","pos":"noun","meaning":"Japanese meaning","paraphrase":"synonym or point","example":"example sentence","example_jp":"Japanese translation"},{"word":"word2","pos":"verb","meaning":"Japanese meaning","paraphrase":"synonym","example":"example","example_jp":"Japanese"}],"extra_examples":[{"sentence":"Extra example using word1","translation":"Japanese"},{"sentence":"Extra example using word2","translation":"Japanese"}]},{"master_sentence":"Second master sentence with key words","master_translation":"Japanese translation","words":[{"word":"word3","pos":"adj","meaning":"Japanese","paraphrase":"synonym","example":"example","example_jp":"Japanese"},{"word":"word4","pos":"noun","meaning":"Japanese","paraphrase":"synonym","example":"example","example_jp":"Japanese"}],"extra_examples":[{"sentence":"Extra example","translation":"Japanese"},{"sentence":"Extra example","translation":"Japanese"}]}],"chunks":[{"english":"First meaningful chunk from text","japanese":"Japanese translation"},{"english":"Second chunk","japanese":"Japanese"},{"english":"Third chunk","japanese":"Japanese"}],"grammar_analysis":[{"sentence":"Complex sentence 1 from text","translation":"Japanese","structure":"S: subject / V: verb / O: object - explain subordinate clauses","toeic_point":"Why this structure is important for TOEIC 900 in Japanese"},{"sentence":"Complex sentence 2","translation":"Japanese","structure":"Grammar structure explanation","toeic_point":"TOEIC 900 point in Japanese"}]},"questions":[{"question":"TOEIC comprehension question","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":0,"explanation":"Japanese explanation"},{"question":"Question 2","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":1,"explanation":"Japanese"},{"question":"Question 3","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":2,"explanation":"Japanese"}],"vocab":[{"word":"TOEIC800+word","pos":"noun","meaning":"Japanese","example":"example","example_jp":"Japanese"},{"word":"word2","pos":"verb","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word3","pos":"adj","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word4","pos":"noun","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word5","pos":"adv","meaning":"Japanese","example":"ex","example_jp":"jp"}]}';
+  var prompt='You are a TOEIC 900-point English coach for Japanese business learners. Analyze the text and respond ONLY with a valid JSON object. No markdown, no extra text.\n\nTEXT: '+text.slice(0,1200)+'\n\nRespond with this exact JSON:\n{"summary":{"overview":"Concise Japanese summary 2-3 sentences","points":["point1 Japanese","point2 Japanese","point3 Japanese"]},"full_translation":"Full natural Japanese translation of entire text","chunks":[{"english":"meaningful chunk sentence from text","japanese":"Japanese translation","structure":"S+V+O or similar","grammar_note":"Key grammar point in Japanese","toeic_note":"TOEIC relevance in Japanese"}],"flashcards":[{"front_sentence":"Sentence with ONE key word replaced by blanks like l___ o__","front_jp":"Japanese translation of the sentence","answer":"the missing word or phrase","word":"the key word","pos":"noun/verb/etc","meaning":"Japanese meaning"},{"front_sentence":"Another cloze sentence","front_jp":"Japanese translation","answer":"answer","word":"word","pos":"pos","meaning":"Japanese meaning"}],"questions":[{"question":"TOEIC question in English","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":0,"explanation":"Japanese explanation"},{"question":"Q2","choices":["A. opt","B. opt","C. opt","D. opt"],"answer":1,"explanation":"Japanese"},{"question":"Q3","choices":["A. opt","B. opt","C. opt","D. opt"],"answer":0,"explanation":"Japanese"}]}\n\nRules:\n- chunks: extract 5-8 important sentences from text\n- flashcards: create 8-10 cloze cards with TOEIC 800+ vocabulary\n- front_sentence: replace key word with first letter + underscores (e.g. l___ o__ for laid off)\n- answer: the exact missing word(s)\n- All Japanese fields must be in Japanese';
 
   try{
     var rawR='';
@@ -688,25 +681,24 @@ async function analyze(){
     }
 
     // 構文
-    if(p.structure){
-      renderStructure(p.structure);
-      // vocab_sectionsの単語をフラッシュカードに追加
-      if(p.structure.vocab_sections){
-        p.structure.vocab_sections.forEach(function(sec){
-          if(sec.words){
-            sec.words.forEach(function(w){
-              if(!flashDeck.some(function(d){return d.word.toLowerCase()===w.word.toLowerCase();})){
-                flashDeck.push({
-                  word:w.word,pos:w.pos,meaning:w.meaning,
-                  example:w.example,example_jp:w.example_jp,
-                  addedAt:new Date().toLocaleDateString('ja-JP')
-                });
-              }
-            });
-            localStorage.setItem('flash_deck',JSON.stringify(flashDeck));
-          }
-        });
-      }
+    if(p.structure||p.chunks||p.full_translation){
+      var structData={
+        full_translation:p.full_translation||'',
+        chunks:p.chunks||[],
+        grammar_analysis:p.grammar_analysis||[]
+      };
+      renderStructure(structData);
+    }
+    // flashcardsをデッキに追加
+    if(p.flashcards&&p.flashcards.length){
+      p.flashcards.forEach(function(fc){
+        if(!flashDeck.some(function(d){return d.front_sentence===fc.front_sentence;})){
+          flashDeck.push(Object.assign({},fc,{
+            addedAt:new Date().toLocaleDateString('ja-JP')
+          }));
+        }
+      });
+      localStorage.setItem('flash_deck',JSON.stringify(flashDeck));
     }
 
     // 問題
@@ -745,7 +737,66 @@ async function analyze(){
 }
 function selectChoice(qi,ci,correct){var card=document.getElementById('qcard-'+qi);if(card.dataset.answered)return;card.dataset.answered='1';answeredCount++;for(var i=0;i<4;i++){var el=document.getElementById('choice-'+qi+'-'+i);if(!el)continue;if(i===correct)el.classList.add('correct');else if(i===ci&&ci!==correct)el.classList.add('wrong');}document.getElementById('exp-'+qi).classList.add('show');if(answeredCount>=totalQuestions)document.getElementById('to-rvocab').style.display='block';}
 function goToFlash(){showView('flash');renderFlash();}
-function renderFlash(){var el=document.getElementById('flash-content');if(!flashDeck.length){el.innerHTML='<div style="padding:16px"><div class="empty-state"><div class="icon">🃏</div>カードがまだありません<br>📖 読解で英文を分析すると<br>単語が自動で追加されます</div></div>';return;}if(!fcQueue.length&&flashDeck.length){fcQueue=flashDeck.slice();}if(!fcQueue.length){el.innerHTML='<div style="padding:16px;text-align:center;padding-top:60px"><div style="font-size:56px;margin-bottom:16px">🎉</div><div style="font-size:20px;font-weight:700;margin-bottom:8px">全部クリア！</div><div style="font-size:14px;color:var(--muted);line-height:1.7">全'+flashDeck.length+'語を学習しました</div><button class="btn-primary" style="margin-top:24px" onclick="fcQueue=flashDeck.slice();renderFlash()">もう一度</button><button onclick="if(confirm("リセットしますか？")){flashDeck=[];fcQueue=[];localStorage.removeItem("flash_deck");renderFlash();}" style="width:100%;margin-top:10px;padding:12px;background:none;border:none;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">🗑 デッキをリセット</button></div>';return;}var total=flashDeck.length,done=total-fcQueue.length,pct=Math.round(done/total*100),v=fcQueue[0];el.innerHTML='<div class="fc-header"><span class="fc-counter">'+(done+1)+' / '+total+'語</span><button onclick="if(confirm("リセットしますか？")){flashDeck=[];fcQueue=[];localStorage.removeItem("flash_deck");renderFlash();}" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🗑 リセット</button></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div class="fc-hint">👆 タップして意味を確認</div><div class="flashcard" id="fc-card" onclick="this.classList.toggle(&quot;flipped&quot;)"><div class="flashcard-inner"><div class="fc-face fc-front"><div class="fc-word">'+esc(v.word)+'</div><div class="fc-pos-hint">'+esc(v.pos)+' · TOEIC 880-900</div></div><div class="fc-face fc-back"><div class="fc-meaning">'+esc(v.meaning)+'</div><div class="fc-example">'+esc(v.example)+'<br><span style="opacity:0.75">'+esc(v.example_jp)+'</span></div></div></div></div><div class="fc-btns"><button class="fc-btn again" onclick="fcAgain()">😅 もう一度</button><button class="fc-btn knew" onclick="fcKnew()">✅ わかった！</button></div>';}
+function renderFlash(){
+  var el=document.getElementById('flash-content');
+  if(!flashDeck.length){
+    el.innerHTML='<div style="padding:16px"><div class="empty-state"><div class="icon">🃏</div>カードがまだありません<br>📖 読解で英文を分析すると追加されます</div></div>';
+    return;
+  }
+  if(!fcQueue.length){
+    var html='<div style="padding:16px;text-align:center;padding-top:60px">';
+    html+='<div style="font-size:56px;margin-bottom:16px">🎉</div>';
+    html+='<div style="font-size:20px;font-weight:700;margin-bottom:8px">全部クリア！</div>';
+    html+='<div style="font-size:14px;color:var(--muted);line-height:1.7">全'+flashDeck.length+'枚を学習しました</div>';
+    html+='<button class="btn-primary" style="margin-top:24px" onclick="fcQueue=flashDeck.slice();renderFlash()">もう一度</button>';
+    html+='<button onclick="clearFlashDeck()" style="width:100%;margin-top:10px;padding:12px;background:none;border:none;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">🗑 デッキをリセット</button>';
+    html+='</div>';
+    el.innerHTML=html;
+    return;
+  }
+  var total=flashDeck.length,done=total-fcQueue.length,pct=Math.round(done/total*100),v=fcQueue[0];
+  var isCloze=!!(v.front_sentence&&v.answer);
+  var html='';
+  html+='<div class="fc-header">';
+  html+='<span class="fc-counter">'+(done+1)+' / '+total+'枚</span>';
+  html+='<button onclick="clearFlashDeck()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🗑 リセット</button>';
+  html+='</div>';
+  html+='<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>';
+  html+='<div class="fc-hint">👆 タップして答えを確認</div>';
+  html+='<div class="flashcard" id="fc-card" onclick="flipCard()">';
+  html+='<div class="flashcard-inner">';
+  // 表面
+  html+='<div class="fc-face fc-front">';
+  if(isCloze){
+    html+='<div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:0.04em">穴埋め問題</div>';
+    html+='<div style="font-size:17px;font-weight:700;color:var(--text);line-height:1.7;text-align:center;margin-bottom:10px">'+esc(v.front_sentence)+'</div>';
+    html+='<div style="font-size:13px;color:var(--muted);text-align:center;line-height:1.6">'+esc(v.front_jp||'')+'</div>';
+  }else{
+    html+='<div class="fc-word">'+esc(v.word||'')+'</div>';
+    html+='<div class="fc-pos-hint">'+esc(v.pos||'')+' · TOEIC 800+</div>';
+  }
+  html+='</div>';
+  // 裏面
+  html+='<div class="fc-face fc-back">';
+  if(isCloze){
+    html+='<div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:8px">答え</div>';
+    html+='<div style="font-size:30px;font-weight:800;color:white;margin-bottom:10px;text-align:center">'+esc(v.answer||'')+'</div>';
+    html+='<div style="font-size:13px;color:rgba(255,255,255,0.8);text-align:center;line-height:1.6">'+esc(v.word||'')+' / '+esc(v.meaning||'')+'</div>';
+  }else{
+    html+='<div class="fc-meaning">'+esc(v.meaning||'')+'</div>';
+    html+='<div class="fc-example">'+esc(v.example||'')+'<br><span style="opacity:0.75">'+esc(v.example_jp||'')+'</span></div>';
+  }
+  html+='</div>';
+  html+='</div></div>';
+  html+='<div class="fc-btns">';
+  html+='<button class="fc-btn again" onclick="fcAgain()">😅 もう一度</button>';
+  html+='<button class="fc-btn knew" onclick="fcKnew()">✅ わかった！</button>';
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function flipCard(){var c=document.getElementById('fc-card');if(c)c.classList.toggle('flipped');}
+function clearFlashDeck(){if(confirm('リセットしますか？')){flashDeck=[];fcQueue=[];localStorage.removeItem('flash_deck');renderFlash();}}
 function fcKnew(){fcQueue.shift();addXP(5,'単語');renderFlash();}
 function fcAgain(){var v=fcQueue.shift();fcQueue.push(v);renderFlash();}
 </script>
