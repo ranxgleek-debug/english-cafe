@@ -239,12 +239,19 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
   <div class="scroll-area">
     <div class="rscreen active" id="rs-input">
       <div class="card">
-        <div class="card-title">📋 英文を貼り付け</div>
-        <div class="sample-btns">
-          <button class="sample-btn" onclick="useSample(0)">🌍 ニュース</button>
-          <button class="sample-btn" onclick="useSample(1)">💼 ビジネス</button>
-          <button class="sample-btn" onclick="useSample(2)">🔬 サイエンス</button>
+        <div class="card-title">🤖 AIで英文を自動生成（TOEIC 850-940レベル）</div>
+        <div class="sample-btns" style="margin-bottom:0">
+          <button class="sample-btn" onclick="generateText('business_email')">📧 ビジネスメール</button>
+          <button class="sample-btn" onclick="generateText('announcement')">📢 社内通知</button>
+          <button class="sample-btn" onclick="generateText('news')">📰 ニュース記事</button>
+          <button class="sample-btn" onclick="generateText('report')">📊 ビジネスレポート</button>
+          <button class="sample-btn" onclick="generateText('negotiation')">🤝 契約・交渉</button>
+          <button class="sample-btn" onclick="generateText('hr')">👥 人事・採用</button>
         </div>
+        <div id="generate-status" style="font-size:13px;color:var(--muted);margin-top:10px;min-height:18px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 または英文を直接貼り付け</div>
         <textarea class="r-textarea" id="reading-input" placeholder="ここに英語のテキストを貼り付け..."></textarea>
       </div>
       <button class="btn-primary" id="analyze-btn" onclick="analyze()">✨ 分析スタート</button>
@@ -290,6 +297,7 @@ header{background:rgba(242,242,247,0.95);backdrop-filter:blur(20px);border-botto
 <script>
 var apiKey=localStorage.getItem('groq_api_key')||'';
 var currentModel=localStorage.getItem('shaberi_model')||'groq:llama-3.3-70b-versatile';
+var xpData=JSON.parse(localStorage.getItem('xp_data')||'{"total":0,"weekly":{}}');
 var vocabList=JSON.parse(localStorage.getItem('vocab_list')||'[]');
 var chatSessions=JSON.parse(localStorage.getItem('chat_sessions')||'[]');
 var currentSession=null;
@@ -315,7 +323,34 @@ window.onload=function(){
   var lv=localStorage.getItem('user_level');
   if(lv){document.getElementById('level-text').textContent=levelLabel(lv);document.getElementById('level-badge').style.display='block';}
   setupSpeech();renderVocab();renderFlash();
+  xpData=JSON.parse(localStorage.getItem('xp_data')||'{"total":0,"weekly":{}}');
+  initNotification();
 };
+function addXP(amount, label){
+  var today=new Date().toLocaleDateString('ja-JP');
+  xpData.total=(xpData.total||0)+amount;
+  xpData.weekly=xpData.weekly||{};
+  xpData.weekly[today]=(xpData.weekly[today]||0)+amount;
+  // 7日以上前のデータを削除
+  var keys=Object.keys(xpData.weekly);
+  keys.forEach(function(k){
+    var d=new Date(k.replace(/(\d+)\/(\d+)\/(\d+)/,'$1/$2/$3'));
+    var diff=(new Date()-d)/(1000*60*60*24);
+    if(diff>7)delete xpData.weekly[k];
+  });
+  localStorage.setItem('xp_data',JSON.stringify(xpData));
+  // XP獲得アニメーション表示
+  showXPToast('+'+amount+'XP '+label);
+}
+
+function showXPToast(msg){
+  var toast=document.createElement('div');
+  toast.textContent=msg;
+  toast.style.cssText='position:fixed;top:80px;right:16px;background:#FF9500;color:white;padding:8px 16px;border-radius:20px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 4px 16px rgba(255,149,0,0.4);transition:all 0.3s;';
+  document.body.appendChild(toast);
+  setTimeout(function(){toast.style.opacity='0';setTimeout(function(){toast.remove();},300);},2000);
+}
+
 function changeModel(val){
   currentModel=val;
   localStorage.setItem('gemini_model',val);
@@ -344,13 +379,14 @@ async function sendMessage(){
   input.value='';autoResize(input);stopMic();
   document.getElementById('prompts').style.display='none';
   updateStreak(true);
+  addXP(10, '会話');
   if(!currentSession)currentSession={id:Date.now(),date:new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),turns:[]};
   var turn=document.createElement('div');turn.className='turn';
   turn.innerHTML='<div class="user-bubble"><div class="label">YOU</div><div class="text">'+esc(text)+'</div></div><div class="thinking"><div class="dots"><span></span><span></span><span></span></div>考えてるよ...</div>';
   document.getElementById('messages').appendChild(turn);scrollBottom();
   isLoading=true;document.getElementById('send-btn').disabled=true;avatarState('talking');
   conversationHistory.push({role:'user',parts:[{text:text}]});
-  var sys='Respond ONLY with a JSON object. No other text. Format: {"check":"corrected English with encouragement","natural":"1-2 natural alternatives","natural_jp":"Japanese translation of natural","reply":"friendly English reply 1-3 sentences","japanese":"Japanese translation of reply","level":"A1 or A2 or B1 or B2 or C1 or C2","mistake":"grammar mistake in Japanese under 15 chars or empty"}';
+  var sys='You are a friendly English conversation partner for Japanese learners. The user may mix Japanese and English (Japanglish). Always understand the full meaning including any Japanese words or phrases, and convert everything into natural English.\n\nALWAYS respond with a valid JSON object. NEVER omit any field. NEVER add text outside the JSON.\n\nRequired JSON format (ALL fields mandatory):\n{\n"check": "Rewrite the ENTIRE user message in correct natural English. If Japanese words were used, translate them into English too. Be encouraging. Always fill this.",\n"natural": "Give 1-2 more natural or native-sounding full English alternatives. Replace ALL Japanese parts with English. Always fill this.",\n"natural_jp": "Japanese translation of the natural alternatives above. Always fill this in Japanese.",\n"reply": "Your friendly conversational reply in English. 1-3 sentences. Always fill this.",\n"japanese": "Japanese translation of your reply above. Always fill this in Japanese.",\n"level": "Estimate TOEIC level: A1 or A2 or B1 or B2 or C1 or C2",\n"mistake": "Describe the main grammar or unnatural expression in Japanese under 15 characters. Empty string if perfect."\n}\n\nIMPORTANT: natural_jp and japanese fields MUST always be in Japanese. Never leave them empty.';
   try{
     var raw='';
     var jsonMatch,p;
@@ -386,7 +422,17 @@ async function sendMessage(){
       raw=geminiData.candidates&&geminiData.candidates[0]&&geminiData.candidates[0].content&&geminiData.candidates[0].content.parts&&geminiData.candidates[0].content.parts[0]?geminiData.candidates[0].content.parts[0].text:'{}';
     }
     jsonMatch=raw.match(/\{[\s\S]*\}/);
-    try{p=JSON.parse(jsonMatch?jsonMatch[0]:raw);}catch(e){p={check:raw,natural:'',natural_jp:'',reply:'',japanese:'',level:'',mistake:''};}
+    try{
+      p=JSON.parse(jsonMatch?jsonMatch[0]:raw);
+      // 空フィールドのフォールバック
+      if(!p.check)p.check=text;
+      if(!p.natural)p.natural='';
+      if(!p.natural_jp)p.natural_jp='（日本語訳を取得できませんでした）';
+      if(!p.reply)p.reply='Sorry, could you say that again?';
+      if(!p.japanese)p.japanese='（日本語訳を取得できませんでした）';
+      if(!p.level)p.level='';
+      if(!p.mistake)p.mistake='';
+    }catch(e){p={check:text,natural:'',natural_jp:'',reply:'Sorry, could you say that again?',japanese:'もう一度言ってもらえますか？',level:'',mistake:''};}
     conversationHistory.push({role:'model',parts:[{text:p.reply||raw}]});
     if(p.level){localStorage.setItem('user_level',p.level);document.getElementById('level-text').textContent=levelLabel(p.level);document.getElementById('level-badge').style.display='block';}
     if(p.mistake&&p.mistake.trim()){var m=JSON.parse(localStorage.getItem('mistake_log')||'[]');m.push(p.mistake.trim());if(m.length>100)m=m.slice(-100);localStorage.setItem('mistake_log',JSON.stringify(m));}
@@ -408,7 +454,114 @@ function saveVocab(btn,phrase,context){if(btn.classList.contains('saved'))return
 function renderVocab(){var list=document.getElementById('vocab-list');if(!vocabList.length){list.innerHTML='<div class="empty-state"><div class="icon">📭</div>まだ保存したフレーズがありません<br>会話中に 💾 を押して保存しよう</div>';return;}list.innerHTML=vocabList.map(function(v,i){return '<div class="vocab-note-item"><div><div class="vocab-note-phrase">'+esc(v.phrase)+'</div><div class="vocab-note-context">'+esc(v.context)+'<br><span style="font-size:11px">'+v.saved+'</span></div></div><button class="del-btn" onclick="deleteVocab('+i+')">×</button></div>';}).join('');}
 function deleteVocab(i){vocabList.splice(i,1);localStorage.setItem('vocab_list',JSON.stringify(vocabList));renderVocab();}
 function speakText(btn,text){if(!window.speechSynthesis){alert('このブラウザは読み上げ非対応です');return;}if(currentUtterance&&btn.classList.contains('speaking')){window.speechSynthesis.cancel();btn.classList.remove('speaking');btn.textContent='🔊 読み上げ';currentUtterance=null;return;}document.querySelectorAll('.speak-btn.speaking').forEach(function(b){b.classList.remove('speaking');b.textContent='🔊 読み上げ';});window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.9;u.onend=function(){btn.classList.remove('speaking');btn.textContent='🔊 読み上げ';currentUtterance=null;};u.onerror=function(){btn.classList.remove('speaking');btn.textContent='🔊 読み上げ';currentUtterance=null;};currentUtterance=u;btn.classList.add('speaking');btn.textContent='⏹ 止める';window.speechSynthesis.speak(u);}
+// ── NOTIFICATION ──
+function setupNotification(){
+  var statusEl=document.getElementById('notif-status');
+  if(!('Notification' in window)){
+    statusEl.textContent='⚠️ このブラウザは通知に対応していません';
+    statusEl.style.color='var(--red)';
+    return;
+  }
+  Notification.requestPermission().then(function(permission){
+    if(permission==='granted'){
+      var hour=document.getElementById('notif-hour').value;
+      localStorage.setItem('notif_hour', hour);
+      scheduleNotification(parseInt(hour));
+      statusEl.textContent='✅ 通知を設定しました！毎日'+hour+'時にお知らせします';
+      statusEl.style.color='var(--green)';
+    } else {
+      statusEl.textContent='⚠️ 通知が許可されませんでした。設定から許可してください';
+      statusEl.style.color='var(--orange)';
+    }
+  });
+}
+
+function scheduleNotification(hour){
+  // 次の通知時刻を計算
+  var now=new Date();
+  var next=new Date();
+  next.setHours(hour,0,0,0);
+  if(next<=now) next.setDate(next.getDate()+1);
+  var delay=next.getTime()-now.getTime();
+
+  // タイマーセット
+  setTimeout(function(){
+    sendNotification();
+    // 以降毎日繰り返し
+    setInterval(sendNotification, 24*60*60*1000);
+  }, delay);
+}
+
+function sendNotification(){
+  if(Notification.permission!=='granted') return;
+  var messages=[
+    {title:'🔥 今日も練習しよう！', body:'ストリークを守れ！Shaberiで英語を話そう'},
+    {title:'📚 単語を覚えよう', body:'フラッシュカードで今日の単語をチェック'},
+    {title:'💬 英語で話してみて', body:'5分だけでもOK！AIと英会話しよう'},
+    {title:'🎯 TOEIC対策', body:'今日の読解問題に挑戦しよう！'},
+    {title:'⭐ XPを稼ごう', body:'今日のXPはまだ0！Shaberiで練習しよう'},
+  ];
+  var s=JSON.parse(localStorage.getItem('streak')||'{"count":0}');
+  var msg=messages[Math.floor(Math.random()*messages.length)];
+  if(s.count>0) msg.body='🔥 '+s.count+'日連続中！今日も続けよう';
+  new Notification(msg.title,{
+    body:msg.body,
+    icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🗣️</text></svg>',
+    badge:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🗣️</text></svg>'
+  });
+}
+
+// 起動時に通知を再スケジュール
+function initNotification(){
+  var hour=localStorage.getItem('notif_hour');
+  if(hour&&Notification.permission==='granted'){
+    scheduleNotification(parseInt(hour));
+  }
+}
+
 function renderAnalysis(){var el=document.getElementById('analysis-content');var mistakes=JSON.parse(localStorage.getItem('mistake_log')||'[]');var savedLevel=localStorage.getItem('user_level');var s=JSON.parse(localStorage.getItem('streak')||'{"count":0,"bestCount":0}');var freq={};mistakes.forEach(function(m){freq[m]=(freq[m]||0)+1;});var sorted=Object.entries(freq).sort(function(a,b){return b[1]-a[1];});var html='<div style="display:flex;gap:12px;margin-bottom:12px"><div class="stat-card" style="flex:1;text-align:center"><div class="stat-label">現在の連続</div><div class="stat-value" style="color:var(--orange)">'+s.count+'<span style="font-size:14px;font-weight:400">日</span></div><div style="font-size:20px">🔥</div></div><div class="stat-card" style="flex:1;text-align:center"><div class="stat-label">最高記録</div><div class="stat-value" style="color:var(--blue)">'+s.bestCount+'<span style="font-size:14px;font-weight:400">日</span></div><div style="font-size:20px">🏆</div></div></div>';if(savedLevel)html+='<div class="stat-card"><div class="stat-label">現在のレベル</div><div style="font-size:22px;font-weight:800;color:var(--purple)">'+levelLabel(savedLevel)+'</div></div>';if(sorted.length){html+='<div class="stat-card"><div class="stat-label">よくあるミス TOP5</div>';sorted.slice(0,5).forEach(function(item,i){html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--blue);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(i+1)+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;margin-bottom:4px">'+esc(item[0])+'</div><div style="height:4px;background:var(--border);border-radius:2px"><div style="height:4px;background:var(--blue);border-radius:2px;width:'+Math.round(item[1]/sorted[0][1]*100)+'%"></div></div></div><div style="font-size:12px;color:var(--muted);font-weight:600">'+item[1]+'回</div></div>';});html+='</div>';}else{html+='<div class="stat-card" style="text-align:center;color:var(--muted)">会話を続けると分析データが蓄積されます</div>';}html+='<button onclick="if(confirm("分析データを削除しますか？")){localStorage.removeItem("mistake_log");localStorage.removeItem("user_level");localStorage.removeItem("streak");renderAnalysis();}" style="width:100%;padding:12px;background:none;border:none;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px">🗑 データをリセット</button>';el.innerHTML=html;}
+async function generateText(genre){
+  if(!apiKey){showApiModal();return;}
+  var statusEl=document.getElementById('generate-status');
+  var textarea=document.getElementById('reading-input');
+  statusEl.textContent='⏳ 英文を生成中...';
+
+  var genreMap={
+    'business_email':'a business email between colleagues discussing a project deadline or budget issue',
+    'announcement':'a company-wide announcement about a new policy, office move, or organizational change',
+    'news':'a business news article about a corporate merger, earnings report, or market trend',
+    'report':'a business report or memo summarizing quarterly results or strategic recommendations',
+    'negotiation':'a business negotiation or contract discussion between two companies',
+    'hr':'a human resources document such as a job posting, performance review policy, or benefits update'
+  };
+
+  var prompt='Generate an English passage for TOEIC 850-940 level practice. The passage should be about '+genreMap[genre]+'. Requirements: 150-200 words, sophisticated vocabulary (TOEIC 800+ level), complex sentence structures, natural business English. Output ONLY the passage text, no title, no explanation.';
+
+  try{
+    var groqModel=currentModel.replace('groq:','');
+    var res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      body:JSON.stringify({
+        model:groqModel,
+        messages:[{role:'user',content:prompt}],
+        max_tokens:400,temperature:0.8
+      })
+    });
+    var data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    var text=data.choices&&data.choices[0]?data.choices[0].message.content.trim():'';
+    if(!text)throw new Error('生成に失敗しました');
+    textarea.value=text;
+    statusEl.textContent='✅ 生成完了！このまま「分析スタート」を押してください';
+    statusEl.style.color='var(--green)';
+    setTimeout(function(){statusEl.style.color='var(--muted)';},3000);
+  }catch(err){
+    statusEl.textContent='⚠️ '+err.message;
+    statusEl.style.color='var(--red)';
+  }
+}
+
 function showRTab(name){document.querySelectorAll('.rscreen').forEach(function(s){s.classList.remove('active');});document.querySelectorAll('.rtab').forEach(function(t){t.classList.remove('active');});document.getElementById('rs-'+name).classList.add('active');document.getElementById('rtab-'+name).classList.add('active');}
 function useSample(i){document.getElementById('reading-input').value=samples[i];}
 async function analyze(){
@@ -434,7 +587,7 @@ async function analyze(){
 
   // gemini-2.0-flash（高速・安定）
   var model=currentModel;
-  var prompt='You are an English learning assistant for Japanese learners. Analyze the text below and respond ONLY with a JSON object.\n\nTEXT:'+text.slice(0,800)+'\n\nRespond with this JSON (all Japanese values in Japanese):\n{"summary":{"overview":"2 sentence Japanese summary","points":["Japanese point 1","Japanese point 2","Japanese point 3"]},"structure":[{"sentence":"exact sentence from text","analysis":"Japanese grammar note","translation":"Japanese translation"},{"sentence":"exact sentence 2","analysis":"Japanese note","translation":"Japanese translation"},{"sentence":"exact sentence 3","analysis":"Japanese note","translation":"Japanese translation"}],"questions":[{"question":"comprehension question in English","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":0,"explanation":"Japanese explanation"},{"question":"question 2","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":1,"explanation":"Japanese"},{"question":"question 3","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":0,"explanation":"Japanese"}],"vocab":[{"word":"TOEIC800+word","pos":"noun","meaning":"Japanese","example":"example","example_jp":"Japanese"},{"word":"word2","pos":"verb","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word3","pos":"adj","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word4","pos":"noun","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word5","pos":"adv","meaning":"Japanese","example":"ex","example_jp":"jp"}]}';
+  var prompt='You are a TOEIC 900-point English coach for Japanese business learners. Analyze the text and respond ONLY with a valid JSON object. No markdown, no extra text.\n\nTEXT: '+text.slice(0,1000)+'\n\nJSON structure:\n{"summary":{"overview":"2-3 sentence Japanese summary","points":["key point 1 in Japanese","key point 2","key point 3"]},"structure":{"full_translation":"Full natural Japanese translation of the entire text","vocab_sections":[{"master_sentence":"Original business sentence using multiple key words in bold with **asterisks**","master_translation":"Japanese translation of master sentence","words":[{"word":"word1","pos":"noun","meaning":"Japanese meaning","paraphrase":"synonym or point","example":"example sentence","example_jp":"Japanese translation"},{"word":"word2","pos":"verb","meaning":"Japanese meaning","paraphrase":"synonym","example":"example","example_jp":"Japanese"}],"extra_examples":[{"sentence":"Extra example using word1","translation":"Japanese"},{"sentence":"Extra example using word2","translation":"Japanese"}]},{"master_sentence":"Second master sentence with key words","master_translation":"Japanese translation","words":[{"word":"word3","pos":"adj","meaning":"Japanese","paraphrase":"synonym","example":"example","example_jp":"Japanese"},{"word":"word4","pos":"noun","meaning":"Japanese","paraphrase":"synonym","example":"example","example_jp":"Japanese"}],"extra_examples":[{"sentence":"Extra example","translation":"Japanese"},{"sentence":"Extra example","translation":"Japanese"}]}],"chunks":[{"english":"First meaningful chunk from text","japanese":"Japanese translation"},{"english":"Second chunk","japanese":"Japanese"},{"english":"Third chunk","japanese":"Japanese"}],"grammar_analysis":[{"sentence":"Complex sentence 1 from text","translation":"Japanese","structure":"S: subject / V: verb / O: object - explain subordinate clauses","toeic_point":"Why this structure is important for TOEIC 900 in Japanese"},{"sentence":"Complex sentence 2","translation":"Japanese","structure":"Grammar structure explanation","toeic_point":"TOEIC 900 point in Japanese"}]},"questions":[{"question":"TOEIC comprehension question","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":0,"explanation":"Japanese explanation"},{"question":"Question 2","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":1,"explanation":"Japanese"},{"question":"Question 3","choices":["A. choice","B. choice","C. choice","D. choice"],"answer":2,"explanation":"Japanese"}],"vocab":[{"word":"TOEIC800+word","pos":"noun","meaning":"Japanese","example":"example","example_jp":"Japanese"},{"word":"word2","pos":"verb","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word3","pos":"adj","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word4","pos":"noun","meaning":"Japanese","example":"ex","example_jp":"jp"},{"word":"word5","pos":"adv","meaning":"Japanese","example":"ex","example_jp":"jp"}]}';
 
   try{
     var rawR='';
@@ -476,12 +629,25 @@ async function analyze(){
     }
 
     // 構文
-    if(p.structure&&p.structure.length){
-      var stc=document.getElementById('structure-content');
-      stc.innerHTML='<div style="margin-bottom:12px"><span class="structure-badge">🔍 構文解説</span></div>'+p.structure.map(function(item,i){
-        return '<div class="sentence-block"><div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px">文'+(i+1)+'</div><div class="sentence-en">'+esc(item.sentence)+'</div><div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:4px">📌 解説</div><div class="structure-note">'+esc(item.analysis)+'</div><div class="structure-jp">🇯🇵 '+esc(item.translation)+'</div></div>';
-      }).join('');
-      document.getElementById('to-quiz').style.display='block';
+    if(p.structure){
+      renderStructure(p.structure);
+      // vocab_sectionsの単語をフラッシュカードに追加
+      if(p.structure.vocab_sections){
+        p.structure.vocab_sections.forEach(function(sec){
+          if(sec.words){
+            sec.words.forEach(function(w){
+              if(!flashDeck.some(function(d){return d.word.toLowerCase()===w.word.toLowerCase();})){
+                flashDeck.push({
+                  word:w.word,pos:w.pos,meaning:w.meaning,
+                  example:w.example,example_jp:w.example_jp,
+                  addedAt:new Date().toLocaleDateString('ja-JP')
+                });
+              }
+            });
+            localStorage.setItem('flash_deck',JSON.stringify(flashDeck));
+          }
+        });
+      }
     }
 
     // 問題
@@ -521,7 +687,7 @@ async function analyze(){
 function selectChoice(qi,ci,correct){var card=document.getElementById('qcard-'+qi);if(card.dataset.answered)return;card.dataset.answered='1';answeredCount++;for(var i=0;i<4;i++){var el=document.getElementById('choice-'+qi+'-'+i);if(!el)continue;if(i===correct)el.classList.add('correct');else if(i===ci&&ci!==correct)el.classList.add('wrong');}document.getElementById('exp-'+qi).classList.add('show');if(answeredCount>=totalQuestions)document.getElementById('to-rvocab').style.display='block';}
 function goToFlash(){showView('flash');renderFlash();}
 function renderFlash(){var el=document.getElementById('flash-content');if(!flashDeck.length){el.innerHTML='<div style="padding:16px"><div class="empty-state"><div class="icon">🃏</div>カードがまだありません<br>📖 読解で英文を分析すると<br>単語が自動で追加されます</div></div>';return;}if(!fcQueue.length&&flashDeck.length){fcQueue=flashDeck.slice();}if(!fcQueue.length){el.innerHTML='<div style="padding:16px;text-align:center;padding-top:60px"><div style="font-size:56px;margin-bottom:16px">🎉</div><div style="font-size:20px;font-weight:700;margin-bottom:8px">全部クリア！</div><div style="font-size:14px;color:var(--muted);line-height:1.7">全'+flashDeck.length+'語を学習しました</div><button class="btn-primary" style="margin-top:24px" onclick="fcQueue=flashDeck.slice();renderFlash()">もう一度</button><button onclick="if(confirm("リセットしますか？")){flashDeck=[];fcQueue=[];localStorage.removeItem("flash_deck");renderFlash();}" style="width:100%;margin-top:10px;padding:12px;background:none;border:none;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">🗑 デッキをリセット</button></div>';return;}var total=flashDeck.length,done=total-fcQueue.length,pct=Math.round(done/total*100),v=fcQueue[0];el.innerHTML='<div class="fc-header"><span class="fc-counter">'+(done+1)+' / '+total+'語</span><button onclick="if(confirm("リセットしますか？")){flashDeck=[];fcQueue=[];localStorage.removeItem("flash_deck");renderFlash();}" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🗑 リセット</button></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div class="fc-hint">👆 タップして意味を確認</div><div class="flashcard" id="fc-card" onclick="this.classList.toggle(&quot;flipped&quot;)"><div class="flashcard-inner"><div class="fc-face fc-front"><div class="fc-word">'+esc(v.word)+'</div><div class="fc-pos-hint">'+esc(v.pos)+' · TOEIC 880-900</div></div><div class="fc-face fc-back"><div class="fc-meaning">'+esc(v.meaning)+'</div><div class="fc-example">'+esc(v.example)+'<br><span style="opacity:0.75">'+esc(v.example_jp)+'</span></div></div></div></div><div class="fc-btns"><button class="fc-btn again" onclick="fcAgain()">😅 もう一度</button><button class="fc-btn knew" onclick="fcKnew()">✅ わかった！</button></div>';}
-function fcKnew(){fcQueue.shift();renderFlash();}
+function fcKnew(){fcQueue.shift();addXP(5,'単語');renderFlash();}
 function fcAgain(){var v=fcQueue.shift();fcQueue.push(v);renderFlash();}
 </script>
 </body>
